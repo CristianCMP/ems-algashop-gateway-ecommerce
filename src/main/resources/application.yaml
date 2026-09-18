@@ -48,7 +48,6 @@ spring:
               filters:
                 - RewritePath=/products/?(?<segment>.*), /api/v1/products$\{segment}
                 - AddResponseHeader=X-Path-rewrite-info, Path have been rewrite to /api/v1/products
-
 #                - name: RewritePath
 #                  args:
 #                    regexp: /products/?(?<segment>.*)
@@ -61,6 +60,10 @@ spring:
 #                    - POST
 #                  allowedHeaders: '*'
 #                  maxAge: 30
+            - id: user-management-route
+              uri: lb://authorization-server
+              predicates:
+                - Path=/api/v1/users/**
 
 
 eureka:
