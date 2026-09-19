@@ -23,7 +23,7 @@ spring:
             add-to-simple-url-handler-mapping: true
             cors-configurations:
               '[/**]':
-                allowed-origins: http://localhost:4200
+                allowed-origins: http://admin.algashop.local:4200
                 allowed-headers: '*'
                 allowedMethods:
                   - GET
