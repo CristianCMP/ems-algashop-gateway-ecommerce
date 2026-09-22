@@ -52,10 +52,19 @@ spring:
                 - Method=GET,POST,PUT,DELETE,OPTIONS
             - id: ordering-route
               uri: lb://ordering
-#              uri: http://localhost:8080 # It can be an internal network or the Internet
+              #              uri: http://localhost:8080 # It can be an internal network or the Internet
               predicates:
                 - Path=/api/v1/orders/**,/api/v1/customers/**,/api/v1/shipping-cost-previews
                 - Method=GET,POST,PUT,DELETE,OPTIONS
+              filters:
+#                - CircuitBreaker=ordering-route-cb
+                - name: CircuitBreaker
+                  args:
+                    name: ordering-route-cb
+                    statusCodes:
+                      - 502
+                      - 504
+                      - 500
             - id: product-catalog-route
               uri: lb://product-catalog
               predicates:
@@ -68,20 +77,20 @@ spring:
               filters:
                 - RewritePath=/products/?(?<segment>.*), /api/v1/products$\{segment}
                 - AddResponseHeader=X-Path-rewrite-info, Path have been rewrite to /api/v1/products
-#                - name: RewritePath
-#                  args:
-#                    regexp: /products/?(?<segment>.*)
-#                    replacement: /api/v1/products$\{segment}
+              #                - name: RewritePath
+              #                  args:
+              #                    regexp: /products/?(?<segment>.*)
+              #                    replacement: /api/v1/products$\{segment}
               metadata:
                 response-timeout: 1000
                 commect-timeout: 1000
-#                cors:
-#                  allowedOrigins: http://localhost:4200
-#                  allowedMethods:
-#                    - GET
-#                    - POST
-#                  allowedHeaders: '*'
-#                  maxAge: 30
+            #                cors:
+            #                  allowedOrigins: http://localhost:4200
+            #                  allowedMethods:
+            #                    - GET
+            #                    - POST
+            #                  allowedHeaders: '*'
+            #                  maxAge: 30
             - id: user-management-route
               uri: lb://authorization-server
               predicates:
@@ -100,7 +109,19 @@ management:
   endpoints:
     web:
       exposure:
-        include: health, gateway
+        include: health, gateway, circuitbreakers
   endpoint:
     gateway:
       enabled: true
+
+resilience4j.circuitbreaker:
+  instances:
+    ordering-route-cb:
+      sliding-window-size: 8
+      failure-rate-threshold: 50
+      minimum-number-of-calls: 5
+      permitted-number-of-calls-in-half-open-state: 5
+      sliding-window-type: COUNT_BASED
+      wait-duration-in-open-state: 10s
+      max-wait-duration-in-half-open-state: 30s
+      register-health-indicator: true
