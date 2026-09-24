@@ -45,29 +45,30 @@ spring:
           httpclient:
             connect-timeout: 1000
             response-timeout: 5000
-          globalcors:
-            add-to-simple-url-handler-mapping: true
-            cors-configurations:
-              '[/**]':
-                allowed-origins: http://admin.algashop.local:4200
-                allowed-headers: '*'
-                allowedMethods:
-                  - GET
-                  - POST
-                  - PUT
-                  - DELETE
-                  - OPTIONS
+# Since it's backend-to-backend, it's not necessary
+#          globalcors:
+#            add-to-simple-url-handler-mapping: true
+#            cors-configurations:
+#              '[/**]':
+#                allowed-origins: http://admin.algashop.local:4200
+#                allowed-headers: '*'
+#                allowedMethods:
+#                  - GET
+#                  - POST
+#                  - PUT
+#                  - DELETE
+#                  - OPTIONS
           routes:
             - id: billing-route
               uri: lb://billing
               predicates:
-                - Path=/api/v1/customers/me/orders/{orderId}/invoice,/api/v1/orders/{orderId}/invoice,/api/v1/customers/me/credit-cards,/api/v1/customers/me/credit-cards/{creditCardId}
+                - Path=/api/v1/customers/me/credit-cards,/api/v1/customers/me/credit-cards/{creditCardId}
                 - Method=GET,POST,PUT,DELETE,OPTIONS
             - id: ordering-route
               uri: lb://ordering
               #              uri: http://localhost:8080 # It can be an internal network or the Internet
               predicates:
-                - Path=/api/v1/orders/**,/api/v1/customers/**,/api/v1/shipping-cost-previews
+                - Path=/api/v1/customers/**,/api/v1/shipping-cost-previews
                 - Method=GET,POST,PUT,DELETE,OPTIONS
               filters:
 #                - CircuitBreaker=ordering-route-cb
@@ -81,7 +82,7 @@ spring:
             - id: product-catalog-route
               uri: lb://product-catalog
               predicates:
-                - Path=/api/v1/products/**,/api/v1/categories/**,/api/v1/upload-requests/**
+                - Path=/api/v1/products/**,/api/v1/categories/**
                 - Method=GET,POST,PUT,DELETE,OPTIONS
               filters:
                 - LocalResponseCache=1m,10MB
@@ -92,27 +93,27 @@ spring:
                       burstCapacity: 200
                       requestedTokens: 1
                     key-resolver: "#{@rateLimitKeyResolver}"
-            - id: product-catalog-test-route
-              uri: lb://product-catalog
-              predicates:
-                - Path=/products/**
-              filters:
-                - RewritePath=/products/?(?<segment>.*), /api/v1/products$\{segment}
-                - AddResponseHeader=X-Path-rewrite-info, Path have been rewrite to /api/v1/products
-              #                - name: RewritePath
-              #                  args:
-              #                    regexp: /products/?(?<segment>.*)
-              #                    replacement: /api/v1/products$\{segment}
-              metadata:
-                response-timeout: 1000
-                commect-timeout: 1000
-            #                cors:
-            #                  allowedOrigins: http://localhost:4200
-            #                  allowedMethods:
-            #                    - GET
-            #                    - POST
-            #                  allowedHeaders: '*'
-            #                  maxAge: 30
+#            - id: product-catalog-test-route
+#              uri: lb://product-catalog
+#              predicates:
+#                - Path=/products/**
+#              filters:
+#                - RewritePath=/products/?(?<segment>.*), /api/v1/products$\{segment}
+#                - AddResponseHeader=X-Path-rewrite-info, Path have been rewrite to /api/v1/products
+#                - name: RewritePath
+#                  args:
+#                    regexp: /products/?(?<segment>.*)
+#                    replacement: /api/v1/products$\{segment}
+#              metadata:
+#                response-timeout: 1000
+#                commect-timeout: 1000
+#                cors:
+#                  allowedOrigins: http://localhost:4200
+#                  allowedMethods:
+#                    - GET
+#                    - POST
+#                  allowedHeaders: '*'
+#                  maxAge: 30
             - id: user-management-route
               uri: lb://authorization-server
               predicates:
